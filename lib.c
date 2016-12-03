@@ -3,6 +3,7 @@
 volatile bool musicIsRun = false;
 volatile uint8_t counterTimer = 0;
 
+
 //init all
 void initPlayer()
 {
@@ -35,7 +36,7 @@ void playTone(uint16_t value)
 
 //playMusic();
 void playMusic(const Tone *tone, uint8_t sizeOfTone)
-{
+{  
   setVolume(100);
   uint8_t i = 0;
   Tone tmp;
@@ -48,10 +49,11 @@ void playMusic(const Tone *tone, uint8_t sizeOfTone)
     
     delayTimer(tmp.typeNote);
     playTone(0);
-    _delay_ms(50);
+    delayTimer(SixteenthNote);
   }
+  
   //stop playing after push button
-  setVolume(3);
+  setVolume(0);
   playTone(0);
   musicIsRun = false;
 }
@@ -81,21 +83,19 @@ void setVolume(uint8_t percent)
 void initPWM()
 {
   PWM_DDR   |= _BV(PWM_PIN);
-  
-  //Configure by yourself
-  
+   
+  //Configure by yourself  
   //16-bit at 16MHz should be devided by 8  
-  TCCR1A |= _BV(COM1A1); //| _BV(WGM11) | _BV(WGM10); 
-  TCCR1B |= _BV(CS11)   | _BV(WGM13);// | _BV(WGM12); 
-  
-  
-  OCR1A = 100;
+  TCCR1A |= _BV(COM1A1);
+  TCCR1B |= _BV(CS11) | _BV(WGM13); 
 }
 
 
 //Hardware initialization of Timer 8-bit
 void initTimer8bit()
 {
+  //Configure by yourself  
+  //8-bit timer  
   TCCR0A |= _BV(WGM01) | _BV(WGM00); 
   TCCR0B |= _BV(WGM02) | _BV(CS00) | _BV(CS02);
 }
@@ -103,11 +103,13 @@ void initTimer8bit()
 //Hardware initialization INT
 void initInterrupt()
 {
-  DDRD  |= _BV(PD2);
-  PORTD |= _BV(PD2);
+  SW_DDR  |= _BV(SW_PIN);
+  SW_PORT |= _BV(SW_PIN);
   
   MCUCR |= _BV(ISC01);
   GIMSK |= _BV(INT0);
+  
+  OCR0A = 0xff;
 }
 
 //calculate delay
@@ -144,25 +146,21 @@ void delayTimer(TypeNote typeNote)
       break;
   }
   
-  uint32_t a = 0;
-  uint32_t wait = (F_CPU / (64 / waitForTimes)) / 8;  
-  while (++a < wait && musicIsRun);
-/*  TIMSK  |= _BV(TOIE0);*/
-/*  while (counterTimer < waitForTimes)*/
-/*  {*/
-/*    sleep_cpu();*/
-/*    if (!musicIsRun)*/
-/*      break;*/
-/*  }*/
-/*    //sleep_cpu();*/
-/*  TIMSK  &= _BV(TOIE0);*/
+  TIMSK  |= _BV(TOIE0);
+  while (counterTimer < waitForTimes && musicIsRun)
+  {
+    sleep_cpu();
+  }
+  TIMSK  &= _BV(TOIE0);
 }
 
+//Interrupt for delay
 ISR(TIMER0_OVF_vect)
 {
   ++counterTimer;
 }
 
+//Interrupt to turn on/off music
 ISR(INT0_vect)
 {
   intRutine();

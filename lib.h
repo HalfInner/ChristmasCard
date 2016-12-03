@@ -12,35 +12,44 @@
 #include <stdbool.h>
 
 //DEFINE YOUR HARDWARE
-#define MAX_OCR  0xffff
 #define PWM_PORT PORTB
 #define PWM_DDR  DDRB
 #define PWM_PIN  PB3
 #define PWM_OCR  OCR1A
 
+#define SW_PORT  PORTD
+#define SW_DDR   DDRD
+#define SW_PIN   PD2
 
+//Current state of player
 extern volatile bool musicIsRun;
+
+//Counter of timer overflow
 extern volatile uint8_t counterTimer;
 
+//Enumeration of common notes
 typedef enum
 {
-  A1 = 110,  //5 struna
-  B1 = 123,
-  C2 = 130,
-  D2 = 146,  //4 struna
-  E2 = 164,
-  F2 = 175,
-  G2 = 196,  //3 struna
-  A2 = 220,
-  B2 = 246,  //2 struna
-  C3 = 261,   
-  D3 = 293,
-  E3 = 330,  //1 struna
-  F3 = 350,
-  G3 = 392,
-  A3 = 440   //1 struna
+  A1   = 110,  //5th string
+  B1   = 123,
+  C2   = 130,
+  D2   = 146,  //4th string
+  E2   = 164,
+  F2   = 175,
+  Fis2 = 184,
+  G2   = 196,  //3r string
+  A2   = 220,
+  B2   = 246,  //2nd string
+  C3   = 261,   
+  D3   = 293,
+  E3   = 330,  //1st string
+  F3   = 350,
+  Fis3 = 369,
+  G3   = 392,
+  A3   = 440   //1st string
 } ToneFreq;
 
+//Enumartion of note's length
 typedef enum
 {
   WholeNote = 1,
@@ -63,11 +72,11 @@ typedef struct
 
 static const uint8_t sizeOfTone = sizeof(Tone);
 
-
+//Setting volume
 void setVolume(uint8_t percent);
 
 //SOFT
-//its calculating tone to pwm
+//Calculating tone frequency to value of pwm
 uint16_t freqToOCR(uint16_t freq);
 
 //What have to be done in Interrupt;
@@ -98,12 +107,5 @@ void initPlayer();
 
 //Read musicFromFlash
 void readFromFlashOneNote(Tone *dest, const void *toneOnFlash);
-
-
-
-
-
-
-
 
 #endif // LIB_H
