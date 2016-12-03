@@ -1,7 +1,49 @@
 #include "lib.h"
 
+
+
+// Description We WishYouAMarryChristmas
+// from: http://abcnotation.com/tunePage?a=www.pghardy.net/concertina/tunebooks/pgh_xmas_tunebook/0055
+const Tone myMusic[] PROGMEM = 
+{
+  {D2, 3}, {G2, 3},{G2, 4},{A2, 4},{G2, 4},{Fis2, 4}, {E2, 3},{C2, 3},{E2, 3},
+  
+  {A2, 3},{A2, 4},{B2, 4},{A2, 4},{G2, 4}, {Fis2, 3},{D2, 3},{D2, 3},
+   
+  {B2, 3},{B2, 4},{C3, 4},{B2, 4},{A2, 4}, {G2, 3},{C2, 3},{D2, 4},{D2, 4},
+  
+  {E2, 3},{A2, 3},{Fis2, 3}, {G2, 2},{Fis2, 3}, {G2, 3},{G2, 3},{G2, 3}, {Fis2, 2},{Fis2, 3},
+  
+  {G2, 3},{Fis2, 3},{E2, 3}, {D2, 2},{A2, 3}, {C3, 3},{A2, 4},{A2, 4},{G2, 3},
+  
+  {D3, 3},{D2, 3},{D2, 4},{D2, 4}, {E2, 3},{A2, 3},{Fis2, 3}, {G2, 1}
+};
+
+
+
 volatile bool musicIsRun = false;
 volatile uint8_t counterTimer = 0;
+
+
+//For playing in background
+//pointer to play in background;
+static const Tone *toneMusic;
+
+//global number of notes
+static uint8_t globalSizeOfTones;
+
+//flag Delay
+static bool flagDelay;
+
+//flag break between notes
+static bool breakNote;
+
+//counter for waiting
+static uint8_t counterWaiting;
+
+//global index
+static uint8_t iMusic;
+////////////////////////////////
 
 
 //init all
@@ -37,25 +79,10 @@ void playTone(uint16_t value)
 //playMusic();
 void playMusic(const Tone *tone, uint8_t sizeOfTone)
 {  
-  setVolume(100);
-  uint8_t i = 0;
-  Tone tmp;
-  for (i = 0; i < sizeOfTone && musicIsRun; ++i)
-  {
-    //Read From Flash
-    readFromFlashOneNote(&tmp, &tone[i]);
-    
-    playTone(tmp.toneFreq);
-    
-    delayTimer(tmp.typeNote);
-    playTone(0);
-    delayTimer(SixteenthNote);
-  }
-  
-  //stop playing after push button
-  setVolume(0);
-  playTone(0);
-  musicIsRun = false;
+  TIMSK  |= _BV(TOIE0);
+  iMusic            = 0;
+  toneMusic         = tone;
+  globalSizeOfTones = sizeOfTone; 
 }
 
 //Read musicFromFlash
@@ -63,12 +90,12 @@ void readFromFlashOneNote(Tone *dest, const void *toneOnFlash)
 {
   union 
   {
-    uint8_t buf[sizeOfTone];
+    uint8_t buf[sizeOfToneStructure];
     Tone tone;
   } newTone;
   
   uint8_t i;
-  for (i = 0; i < sizeOfTone; i++)
+  for (i = 0; i < sizeOfToneStructure; i++)
     newTone.buf[i] = pgm_read_byte(toneOnFlash++);
   
   *dest = newTone.tone;  
@@ -146,23 +173,61 @@ void delayTimer(TypeNote typeNote)
       break;
   }
   
-  TIMSK  |= _BV(TOIE0);
-  while (counterTimer < waitForTimes && musicIsRun)
-  {
-    sleep_cpu();
-  }
-  TIMSK  &= _BV(TOIE0);
+  flagDelay = true;
+  counterWaiting = waitForTimes;
 }
 
 //Interrupt for delay
 ISR(TIMER0_OVF_vect)
 {
-  ++counterTimer;
+  if (musicIsRun)
+  {
+    if (flagDelay)
+    {
+        if (counterTimer >= counterWaiting)
+        {
+          flagDelay = false;
+          breakNote = !breakNote;
+        }
+    }
+    else if (iMusic < globalSizeOfTones && !breakNote)
+    {
+      setVolume(100);
+      Tone tmp;
+       
+      //Read From Flash
+      readFromFlashOneNote(&tmp, &toneMusic[iMusic++]);      
+      playTone(tmp.toneFreq);
+      delayTimer(tmp.typeNote);
+    }
+    else if (breakNote)
+    {
+      playTone(0);
+      delayTimer(SixteenthNote);
+    }
+    else
+    {      
+      setVolume(0);
+      playTone(0);
+      musicIsRun = false;
+    }
+    ++counterTimer;
+  }
+  else
+  {    
+    //stop playing after push button
+    setVolume(0);
+    playTone(0);
+    musicIsRun = false;
+    TIMSK  &= ~_BV(TOIE0);
+  }
 }
 
 //Interrupt to turn on/off music
 ISR(INT0_vect)
 {
   intRutine();
+  if (musicIsRun)
+    playMusic(myMusic, sizeof(myMusic) / sizeOfToneStructure);
 }
 

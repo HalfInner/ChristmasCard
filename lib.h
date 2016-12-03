@@ -27,6 +27,7 @@ extern volatile bool musicIsRun;
 //Counter of timer overflow
 extern volatile uint8_t counterTimer;
 
+
 //Enumeration of common notes
 typedef enum
 {
@@ -70,7 +71,7 @@ typedef struct
   TypeNote typeNote;
 } Tone;
 
-static const uint8_t sizeOfTone = sizeof(Tone);
+static const uint8_t sizeOfToneStructure = sizeof(Tone);
 
 //Setting volume
 void setVolume(uint8_t percent);
