@@ -29,46 +29,43 @@ extern volatile uint8_t counterTimer;
 
 
 //Enumeration of common notes
-typedef enum
-{
-  A1   = 110,  //5th string
-  B1   = 123,
-  C2   = 130,
-  D2   = 146,  //4th string
-  E2   = 164,
-  F2   = 175,
-  Fis2 = 184,
-  G2   = 196,  //3r string
-  A2   = 220,
-  B2   = 246,  //2nd string
-  C3   = 261,   
-  D3   = 293,
-  E3   = 330,  //1st string
-  F3   = 350,
-  Fis3 = 369,
-  G3   = 392,
-  A3   = 440   //1st string
+typedef enum {
+    A1 = 110,  //5th string
+    B1 = 123,
+    C2 = 130,
+    D2 = 146,  //4th string
+    E2 = 164,
+    F2 = 175,
+    Fis2 = 184,
+    G2 = 196,  //3r string
+    A2 = 220,
+    B2 = 246,  //2nd string
+    C3 = 261,
+    D3 = 293,
+    E3 = 330,  //1st string
+    F3 = 350,
+    Fis3 = 369,
+    G3 = 392,
+    A3 = 440   //1st string
 } ToneFreq;
 
 //Enumartion of note's length
-typedef enum
-{
-  WholeNote = 1,
-  HalfNote,
-  QuarterNote,
-  EigthNote,
-  SixteenthNote
+typedef enum {
+    WholeNote = 1,
+    HalfNote,
+    QuarterNote,
+    EigthNote,
+    SixteenthNote
 } TypeNote;
 
 
 //structure of one Tone
-typedef struct
-{
-  //frequency
-  ToneFreq toneFreq;
-  
-  //Divider of note -> Whole note / half note ect. 
-  TypeNote typeNote;
+typedef struct {
+    //frequency
+    ToneFreq toneFreq;
+
+    //Divider of note -> Whole note / half note ect.
+    TypeNote typeNote;
 } Tone;
 
 static const uint8_t sizeOfToneStructure = sizeof(Tone);
